@@ -7,10 +7,13 @@ con cuestionarios, incluida la identificación de estructuras directamente sobre
 Primera especie: **perro** (*Canis lupus familiaris*). La arquitectura admite nuevas especies
 sin modificar el visor ni las páginas.
 
-> **Aviso sobre el modelo 3D.** Esta versión incluye un modelo **esquemático provisional**
-> generado por código, con una malla por estructura y la topografía general correcta,
-> pero **no** es un modelo anatómico validado. La aplicación lo indica en el visor. El
-> sistema está preparado para importar el modelo GLB definitivo: ver
+> **Demo en vivo:** https://juan2052h.github.io/veterinaria-3D/ (entra como invitado o regístrate; los datos se guardan en tu navegador).
+
+> **Aviso sobre el modelo 3D.** El modelo actual (v2.2) se genera por código a partir de la
+> bibliografía: modelado orgánico con campos de distancia (SDF), materiales por tejido y unas
+> 205 mallas (~2,7 millones de triángulos). Tiene la topografía general correcta, pero **no** es
+> un modelo anatómico validado (no proviene de un espécimen ni de tomografía), y la aplicación
+> lo indica en el visor. El sistema está preparado para importar el modelo GLB definitivo: ver
 > [docs/MODELOS_3D.md](docs/MODELOS_3D.md).
 
 ## Puesta en marcha
@@ -18,7 +21,7 @@ sin modificar el visor ni las páginas.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 15 pruebas: modelo ↔ fichas, motor de cuestionarios, calificación
+npm test           # 18 pruebas: modelo ↔ fichas, SDF, motor de cuestionarios, calificación
 npm run build      # compilación de producción en dist/
 ```
 
@@ -29,8 +32,8 @@ El primer usuario que se registra en un navegador obtiene el rol de **administra
 
 | Área | Contenido |
 |---|---|
-| **Explorador 3D** | Rotación, zoom y desplazamiento; vistas lateral D/I, dorsal, ventral, craneal y caudal; centrar y restablecer; selección por clic con resaltado y etiquetas; 12 sistemas activables con opacidad propia; exploración por capas (de la piel al esqueleto); modo transparente, rayos X y aislamiento; comparación de lados izquierdo/derecho; comparación de capas; cortes sagital, transversal y dorsal; macho/hembra; capturas; modo sin distracciones; buscador |
-| **Fichas** | 84 estructuras con nombre NAV, nombre anatómico y común, sistema, clasificación, localización, función, características, relaciones, importancia clínica y referencias; comparación entre estructuras |
+| **Explorador 3D** | Rotación, zoom y desplazamiento; vistas lateral D/I, dorsal, ventral, craneal y caudal; centrar y restablecer; selección por clic con resaltado y etiquetas; 12 sistemas activables con opacidad propia; disección en 8 pasos (piel, fascia, músculos superficiales y profundos, vísceras, esqueleto); modo transparente, rayos X y aislamiento; comparación de lados izquierdo/derecho; comparación de capas; cortes sagital, transversal y dorsal; macho/hembra; capturas; modo sin distracciones; buscador |
+| **Fichas** | Más de 120 estructuras con nombre NAV, nombre anatómico y común, sistema, clasificación, localización, función, características, relaciones, importancia clínica y referencias; comparación entre estructuras |
 | **Aprendizaje** | Estudio guiado en 11 pasos, fichas de estudio (tarjetas), glosario de 49 términos, material de repaso según tus errores, filtros por nivel |
 | **Cuestionarios** | Selección múltiple, verdadero/falso, identificación en 3D, relacionar, completar; aleatorios, por sistema, personalizados y guardables; modo práctica y examen con tiempo |
 | **Resultados** | Nota (0–5), % de conocimiento, correctas/incorrectas, tiempo, temas dominados y a reforzar, explicación de errores, repetir o generar nueva versión, exportación a PDF |
@@ -48,7 +51,8 @@ src/
 │     ├─ questions.ts      preguntas redactadas
 │     ├─ glossary.ts       glosario
 │     ├─ guidedPath.ts     ruta de estudio guiado
-│     ├─ schematicModel.ts modelo esquemático provisional (generado por código)
+│     ├─ schematicModel.ts modelo procedural v2 (se genera en un Web Worker y se cachea en IndexedDB)
+│     ├─ sdf.ts / model/  modelado orgánico con SDF: esqueleto, músculos, vísceras, piel
 │     ├─ meshMap.ts        asociación malla GLB → ficha
 │     └─ index.ts          SpeciesManifest
 ├─ viewer/          Visor 3D (React Three Fiber) independiente de la especie
@@ -101,7 +105,7 @@ fichas del sistema respiratorio.
 
 1. **Modelo anatómico definitivo** (prioridad principal): obtener o encargar un GLB con
    licencia adecuada y validarlo; importarlo con el panel de administración.
-2. Revisión docente de las 84 fichas y del banco de preguntas.
+2. Revisión docente de las fichas y del banco de preguntas.
 3. Backend Node.js + PostgreSQL con autenticación en servidor y calificación verificada.
 4. Carga de sistemas bajo demanda (un GLB por sistema) y compresión Draco/Meshopt.
 5. Contenido regional avanzado (anatomía topográfica por regiones) y más estructuras

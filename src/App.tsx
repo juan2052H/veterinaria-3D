@@ -58,7 +58,7 @@ export default function App() {
         </div>
       )}
     >
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Suspense fallback={<Loading />}>
           {!user ? (
             <Routes>
