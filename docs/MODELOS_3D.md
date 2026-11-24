@@ -7,7 +7,7 @@ usarse siempre que cada malla pueda asociarse a una ficha anatómica.
 
 La especie *Perro* incluye un **modelo esquemático provisional** generado por código
 (`src/species/dog/schematicModel.ts`, módulos en `src/species/dog/model/`). Tiene una
-malla independiente por estructura (≈180 mallas, 114 fichas).
+malla independiente por estructura (≈205 mallas, 125 fichas).
 
 ### Versión 2 (noviembre de 2026): modelado orgánico
 
@@ -15,13 +15,13 @@ malla independiente por estructura (≈180 mallas, 114 fichas).
 |---|---|
 | Geometría | Campos de distancia (SDF, `src/species/dog/sdf.ts`): cada estructura es una unión suave de primitivas con sus accidentes (cóndilos, tubérculos, apófisis, forámenes, lóbulos, cisuras), poligonizada con *surface nets* |
 | Esqueleto | Cráneo hueco con órbitas, arcos cigomáticos y bulas; 42 dientes; vértebras con arco, canal, apófisis espinosas (vértebra anticlinal T11) y transversas; costillas con cartílagos costales y arco costal; huesos largos con epífisis; foramen supratroclear; mano y pie con carpo/tarso, metapodios, falanges y sesamoideos |
-| Músculos | ≈30 por lado, con dirección de fibras, tendones, aponeurosis e intersecciones tendinosas; clasificados como superficiales o profundos |
+| Músculos | ≈40 por lado (incluidos epaxiales, intercostales externos, iliopsoas y los principales del antebrazo y la pierna, con tendones hasta los dedos), con dirección de fibras, aponeurosis e intersecciones tendinosas; clasificados como superficiales o profundos |
 | Vísceras | Corazón con atrios, orejuelas, ventrículos y grasa en los surcos coronarios; pulmones lobulados con cisuras; árbol bronquial; hígado con lóbulos e impresión renal; tubo digestivo completo; aparato urogenital de ambos sexos |
 | Tegumento | Piel, tejido subcutáneo y fascia superficial extraídos del mismo campo (concéntricos), ajustados a los relieves musculares y óseos; almohadillas y uñas; orejas, trufa, hendiduras palpebrales |
 | Materiales | `src/viewer/tissueMaterials.ts`: PBR (MeshPhysicalMaterial) con microrrelieve y variación de color procedurales por tejido (fibras musculares, porosidad ósea, lobulillos pulmonares, circunvoluciones, pelaje…), con antialiasing; sin texturas descargadas |
 | Presentación | Iluminación de estudio con sombras suaves, entorno de *softboxes* para los reflejos, transiciones suaves entre capas |
 | Disección | 8 pasos: piel → subcutáneo → fascia → músculos superficiales → profundos → vísceras → sistema nervioso → esqueleto |
-| Rendimiento | Generación en un Web Worker (≈4–7 s, sin bloquear la interfaz); ≈2,5 M triángulos en total, de los que solo se dibujan los sistemas visibles. `npm run model:stats` muestra el detalle |
+| Rendimiento | Generación en un Web Worker (≈6–9 s la primera vez, sin bloquear la interfaz) y caché en IndexedDB para las visitas siguientes (incrementar `MODEL_VERSION` en `modelCache.ts` al cambiar la geometría); ≈2,7 M triángulos en total, de los que solo se dibujan los sistemas visibles. `npm run model:stats` muestra el detalle |
 
 ### Lo que este modelo NO es
 
@@ -30,8 +30,8 @@ descripciones de la bibliografía, no de un espécimen ni de imágenes (TC/RM), 
 interfaz lo indica de forma permanente. Limitaciones conocidas:
 
 - Las proporciones y formas son aproximadas; los músculos son vientres y láminas
-  simplificados (faltan, entre otros, los epaxiales, los intercostales y la mayoría de
-  los músculos del antebrazo y la pierna).
+  simplificados (faltan, entre otros, los intercostales internos, el transverso y el
+  oblicuo interno del abdomen, los rotadores de la cadera y los flexores profundos).
 - No hay pelaje geométrico: el pelo se sugiere con el material.
 - Las válvulas cardiacas, las cámaras internas y la mucosa no se modelan.
 - La epidermis, la dermis, los folículos y las glándulas cutáneas son **estructuras

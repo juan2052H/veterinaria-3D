@@ -10,8 +10,9 @@ import * as THREE from 'three';
 import { basis, chain, cone, ellipsoidB, type Prim, shell, solid } from '../sdf';
 import { belly, DOME, fore, hind, lerp, onWall, type Part, SIDES, v, type V, wallZ } from './common';
 import type { Tissue } from '../../../viewer/tissueMaterials';
+import { digits, ribPoints } from './skeleton';
 
-const SHEETS = new Set(['m_latissimus_dorsi', 'm_obliquus_externus_abdominis', 'm_trapezius', 'm_serratus_ventralis', 'm_rectus_abdominis']);
+const SHEETS = new Set(['m_latissimus_dorsi', 'm_obliquus_externus_abdominis', 'm_trapezius', 'm_serratus_ventralis', 'm_rectus_abdominis', 'mm_intercostales_externi', 'm_iliocostalis', 'm_longissimus', 'm_iliopsoas']);
 const MUSCLE = { voxel: 0.026, k: 0.03, fibers: true, altBlend: 0.035, smooth: 3 };
 
 interface M { main: Prim[]; alt: Prim[] }
@@ -254,6 +255,75 @@ export function buildMuscles(parts: Part[]): Prim[] {
     m.main = bellyAlong([H.st.clone().add(v(0.08, -0.16, s * 0.06)), H.st.clone().add(v(0.07, -0.5, s * 0.05)), H.st.clone().add(v(0.03, -0.85, s * 0.02))], 0.07, { peak: 0.35 });
     m.alt = tendon([H.st.clone().add(v(0.03, -0.85, s * 0.02)), H.ta.clone().add(v(0.09, 0.04, -s * 0.03)), H.ta.clone().add(v(0.07, -0.24, -s * 0.06))], 0.016);
     add('m_tibialis_cranialis', m, 'muscleDark');
+
+    /* ------------------- Ampliación (v2.2): músculos que faltaban ------------------- */
+    // Epaxiales: longísimo (medial, a lo largo de las apófisis transversas) e iliocostal (lateral, sobre los ángulos costales)
+    m = M();
+    m.main = chain([v(-1.95, 5.0, s * 0.2), v(-1.3, 5.12, s * 0.21), v(-0.5, 5.17, s * 0.21), v(0.6, 5.26, s * 0.2), v(1.6, 5.3, s * 0.19), v(2.3, 5.32, s * 0.17), v(2.95, 5.62, s * 0.15)],
+      (t) => 0.06 + 0.1 * Math.pow(Math.sin(Math.PI * Math.min(1, 0.2 + t * 1.1)), 0.6) * (1 - 0.5 * t), { segs: 24, flat: { n: lat, f: 0.72 } });
+    m.alt = chain([v(-1.95, 5.08, s * 0.16), v(-0.8, 5.28, s * 0.16)], () => 0.05, { segs: 4, flat: { n: v(0, 1, 0), f: 0.3 } }); // fascia toracolumbar (aponeurosis)
+    add('m_longissimus', m, 'muscleDark', { altBlend: 0.05 });
+
+    m = M();
+    m.main = chain([v(-1.85, 4.9, s * 0.36), v(-1.0, 5.0, s * 0.43), v(0.0, 5.0, s * 0.5), v(1.0, 5.0, s * 0.48), v(1.9, 5.0, s * 0.42)], (t) => 0.075 - 0.03 * t, { segs: 18, flat: { n: v(0, 0.5, s), f: 0.45 } });
+    add('m_iliocostalis', m);
+
+    m = M();
+    m.main = bellyAlong([v(1.95, 5.55, s * 0.12), v(2.55, 5.62, s * 0.2), v(3.15, 5.82, s * 0.22), v(3.72, 6.22, s * 0.22)], 0.12, { peak: 0.45, flat: { n: lat, f: 0.5 } });
+    add('m_splenius', m);
+
+    // Intercostales externos: lámina entre costillas consecutivas (fibras caudoventrales)
+    m = M();
+    for (let i = 0; i < 12; i++) {
+      const a = ribPoints(i, s), b = ribPoints(i + 1, s);
+      const n = Math.min(a.length, b.length);
+      const mid = Array.from({ length: n - 2 }, (_, j) => a[j + 2].clone().lerp(b[j + 2], 0.5));
+      const gap = a[3].distanceTo(b[3]);
+      m.main.push(...chain(mid, () => Math.max(0.03, gap * 0.48), { segs: 8, flat: { n: v(0, 0.15, s), f: 0.22 } }));
+    }
+    add('mm_intercostales_externi', m, 'muscleDark', { k: 0.02, voxel: 0.03 });
+
+    // Antebrazo: extensores digital común y ulnar del carpo, flexor digital superficial
+    const manusDigits = digits(F.ca, F.mc, s);
+    m = M();
+    m.main = bellyAlong([F.el.clone().add(v(-0.01, 0.05, s * 0.12)), F.el.clone().add(v(0.06, -0.35, s * 0.1)), F.el.clone().add(v(0.06, -0.8, s * 0.06))], 0.07, { peak: 0.35 });
+    m.alt = [...tendon([F.el.clone().add(v(0.06, -0.8, s * 0.06)), F.ca.clone().add(v(0.07, 0.04, s * 0.03))], 0.018),
+      ...manusDigits.flatMap((d) => tendon([F.ca.clone().add(v(0.07, 0.04, s * 0.03)), d.head.clone().add(v(0.03, 0.04, 0)), d.p2.clone().add(v(0.0, 0.03, 0))], 0.009))];
+    add('m_extensor_digitorum_communis', m, 'muscle', { voxel: 0.016, k: 0.015 });
+
+    m = M();
+    m.main = bellyAlong([F.el.clone().add(v(-0.06, 0.02, s * 0.14)), F.el.clone().add(v(-0.08, -0.4, s * 0.12)), F.ca.clone().add(v(-0.05, 0.28, s * 0.09))], 0.06, { peak: 0.4 });
+    m.alt = tendon([F.ca.clone().add(v(-0.05, 0.28, s * 0.09)), F.ca.clone().add(v(-0.03, -0.14, s * 0.11))], 0.016);
+    add('m_extensor_carpi_ulnaris', m, 'muscleDark', { voxel: 0.018, k: 0.015 });
+
+    m = M();
+    m.main = bellyAlong([F.el.clone().add(v(-0.07, 0.0, -s * 0.11)), F.el.clone().add(v(-0.18, -0.45, -s * 0.03)), F.ca.clone().add(v(-0.17, 0.3, -s * 0.0))], 0.065, { peak: 0.4 });
+    m.alt = [...tendon([F.ca.clone().add(v(-0.17, 0.3, 0)), F.ca.clone().add(v(-0.13, -0.12, 0))], 0.02),
+      ...manusDigits.flatMap((d) => tendon([F.ca.clone().add(v(-0.13, -0.12, 0)), d.head.clone().add(v(-0.06, -0.05, 0)), d.p1.clone().add(v(0.0, -0.04, 0))], 0.009))];
+    add('m_flexor_digitorum_superficialis', m, 'muscle', { voxel: 0.016, k: 0.015 });
+
+    // Muslo: tensor de la fascia lata (con la fascia lata como aponeurosis) e iliopsoas (sublumbar, profundo)
+    m = M();
+    m.main = bellyAlong([v(-1.72, 4.62, s * 0.5), v(-1.76, 4.35, s * 0.6), v(-1.82, 4.05, s * 0.66)], 0.1, { flat: { n: lat, f: 0.45 } });
+    m.alt = chain([v(-1.82, 4.05, s * 0.66), H.hi.clone().lerp(H.st, 0.55).add(v(0.12, 0, s * 0.2)), H.st.clone().add(v(0.06, 0.35, s * 0.16))], () => 0.08, { segs: 6, flat: { n: lat, f: 0.25 } });
+    add('m_tensor_fasciae_latae', m, 'muscleDark', { altBlend: 0.05 });
+
+    m = M();
+    m.main = bellyAlong([v(-0.75, 4.8, s * 0.2), v(-1.55, 4.66, s * 0.22), v(-2.15, 4.38, s * 0.3), H.hi.clone().add(v(-0.06, -0.2, s * 0.06))], 0.11, { peak: 0.45, p: 0.5 });
+    add('m_iliopsoas', m);
+
+    // Pierna: extensor digital largo y fibular largo
+    const pedisDigits = digits(H.ta.clone().add(v(0.03, -0.16, 0)), H.mt, s);
+    m = M();
+    m.main = bellyAlong([H.st.clone().add(v(0.03, 0.0, s * 0.08)), H.st.clone().add(v(0.02, -0.45, s * 0.1)), H.st.clone().add(v(-0.02, -0.85, s * 0.07))], 0.055, { peak: 0.35 });
+    m.alt = [...tendon([H.st.clone().add(v(-0.02, -0.85, s * 0.07)), H.ta.clone().add(v(0.07, 0.0, s * 0.02)), H.ta.clone().add(v(0.07, -0.3, 0))], 0.016),
+      ...pedisDigits.flatMap((d) => tendon([H.ta.clone().add(v(0.07, -0.3, 0)), d.head.clone().add(v(0.03, 0.04, 0)), d.p2.clone().add(v(0.0, 0.03, 0))], 0.009))];
+    add('m_extensor_digitorum_longus', m, 'muscle', { voxel: 0.016, k: 0.015 });
+
+    m = M();
+    m.main = bellyAlong([H.st.clone().add(v(-0.04, -0.14, s * 0.14)), H.st.clone().add(v(-0.06, -0.45, s * 0.12)), H.st.clone().add(v(-0.06, -0.7, s * 0.11))], 0.05, { peak: 0.35 });
+    m.alt = tendon([H.st.clone().add(v(-0.06, -0.7, s * 0.11)), H.ta.clone().add(v(-0.02, 0.04, s * 0.12)), H.ta.clone().add(v(0.01, -0.2, s * 0.06)), H.ta.clone().add(v(0.02, -0.25, -s * 0.06))], 0.013);
+    add('m_fibularis_longus', m, 'muscleDark', { voxel: 0.016, k: 0.015 });
   }
 
   // Diafragma: lámina en cúpula con centro tendinoso, pilares y los tres hiatos

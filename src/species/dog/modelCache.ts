@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import type { Part } from './model/common';
 
-export const MODEL_VERSION = 'dog-schematic-2.1';
+export const MODEL_VERSION = 'dog-schematic-2.2';
 const DB = 'vet3d-model-cache';
 const STORE = 'models';
 

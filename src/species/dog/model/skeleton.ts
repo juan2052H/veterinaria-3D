@@ -173,26 +173,34 @@ function canal(): Prim[] {
 const RIB_W = [0.56, 0.66, 0.74, 0.8, 0.85, 0.88, 0.9, 0.91, 0.91, 0.9, 0.87, 0.83, 0.78];
 export const STERNUM = new THREE.CatmullRomCurve3([v(2.32, 3.4, 0), v(1.6, 3.1, 0), v(0.6, 2.98, 0), v(-0.25, 3.05, 0), v(-0.62, 3.16, 0)]);
 
+/** Trayectoria de la costilla i (0 = primera) del lado s: cabeza, tubérculo, ángulo, cuerpo y unión costocondral. */
+export function ribPoints(i: number, s: number): V[] {
+  const head = frameAt(THOR, i / 13 + 0.01);
+  const tub = frameAt(THOR, (i + 0.45) / 13);
+  const W = RIB_W[i];
+  const h = head.p;
+  const ccY = i < 9 ? 3.32 + Math.max(0, i - 4) * 0.05 : 3.55 + (i - 9) * 0.18;
+  const cc = v(h.x - 0.45 - i * 0.025, ccY, s * W * 0.86);
+  const pts = [
+    h.clone().add(v(0, -0.02, s * 0.06)),
+    tub.p.clone().add(v(-0.02, 0.06, s * 0.15)),
+    v(h.x - 0.1, h.y - 0.12, s * W * 0.62),
+    v(h.x - 0.22, h.y - 0.55, s * W * 0.95),
+    v(h.x - 0.34, h.y - 1.05, s * W),
+    cc,
+  ];
+  if (i === 12) pts.splice(4, 2, v(h.x - 0.36, 3.95, s * W * 0.98));
+  return pts;
+}
+
 function ribs(s: number) {
   const bone: Prim[] = [];
   const cart: Prim[] = [];
   let prevEnd: V | null = null;
   for (let i = 0; i < 13; i++) {
-    const head = frameAt(THOR, i / 13 + 0.01);
-    const tub = frameAt(THOR, (i + 0.45) / 13);
     const W = RIB_W[i];
-    const h = head.p;
-    const ccY = i < 9 ? 3.32 + Math.max(0, i - 4) * 0.05 : 3.55 + (i - 9) * 0.18;
-    const cc = v(h.x - 0.45 - i * 0.025, ccY, s * W * 0.86);
-    const pts = [
-      h.clone().add(v(0, -0.02, s * 0.06)),
-      tub.p.clone().add(v(-0.02, 0.06, s * 0.15)),
-      v(h.x - 0.1, h.y - 0.12, s * W * 0.62),
-      v(h.x - 0.22, h.y - 0.55, s * W * 0.95),
-      v(h.x - 0.34, h.y - 1.05, s * W),
-      cc,
-    ];
-    if (i === 12) pts.splice(4, 2, v(h.x - 0.36, 3.95, s * W * 0.98));
+    const pts = ribPoints(i, s);
+    const cc = pts[pts.length - 1];
     bone.push(...chain(pts, (t) => 0.034 - 0.008 * t, { segs: 12, flat: { n: v(1, 0, 0), f: 0.75 } }));
     if (i < 9) {
       const st = STERNUM.getPointAt(i === 0 ? 0.04 : Math.min(0.98, i / 8.7));
