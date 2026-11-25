@@ -7,7 +7,7 @@ con cuestionarios, incluida la identificación de estructuras directamente sobre
 Primera especie: **perro** (*Canis lupus familiaris*). La arquitectura admite nuevas especies
 sin modificar el visor ni las páginas.
 
-> **Demo en vivo:** https://juan2052h.github.io/veterinaria-3D/ (entra como invitado o regístrate; los datos se guardan en tu navegador).
+> **Demo en vivo:** https://juanromanbedoya.github.io/veterinaria-3D/ (entra como invitado o regístrate; los datos se guardan en tu navegador).
 
 > **Aviso sobre el modelo 3D.** El modelo actual (v2.2) se genera por código a partir de la
 > bibliografía: modelado orgánico con campos de distancia (SDF), materiales por tejido y unas

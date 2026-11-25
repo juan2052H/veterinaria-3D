@@ -25,7 +25,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      # La app vive en https://juan2052h.github.io/veterinaria-3D/
+      # La app vive en https://juanromanbedoya.github.io/veterinaria-3D/
       - run: npx tsc -b && npx vite build --base=/veterinaria-3D/
       # Enlaces directos (p. ej. /veterinaria-3D/explorador) cargan la app en vez de un 404
       - run: cp dist/index.html dist/404.html
